@@ -1,13 +1,22 @@
 <?php
-// Load local config if present (create this file on the server, never commit it)
-if (file_exists(__DIR__ . '/local.php')) {
-    require_once __DIR__ . '/local.php';
+// Parse .env file if present (shared hosting — no Composer/dotenv library)
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
+        [$key, $val] = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($val);
+    }
 }
 
-define('DB_HOST',    getenv('DB_HOST') ?: (defined('LOCAL_DB_HOST') ? LOCAL_DB_HOST : 'lamp-mysql8'));
-define('DB_NAME',    getenv('DB_NAME') ?: (defined('LOCAL_DB_NAME') ? LOCAL_DB_NAME : 'pasanaku'));
-define('DB_USER',    getenv('DB_USER') ?: (defined('LOCAL_DB_USER') ? LOCAL_DB_USER : 'docker'));
-define('DB_PASS',    getenv('DB_PASS') ?: (defined('LOCAL_DB_PASS') ? LOCAL_DB_PASS : 'docker'));
+function env(string $key, string $default = ''): string {
+    return $_ENV[$key] ?? getenv($key) ?: $default;
+}
+
+define('DB_HOST',    env('DB_HOST',    'lamp-mysql8'));
+define('DB_NAME',    env('DB_NAME',    'pasanaku'));
+define('DB_USER',    env('DB_USER',    'docker'));
+define('DB_PASS',    env('DB_PASS',    'docker'));
 define('DB_CHARSET', 'utf8mb4');
 
 function getDB(): PDO {
