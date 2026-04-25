@@ -84,7 +84,7 @@ function formatBs(float $n): string { return 'Bs ' . number_format($n, 0, ',', '
       <?php endif; ?>
 
       <div style="padding:12px 20px 0">
-        <a href="?page=pasanaku&action=create" class="btn-pk-outline w-100 justify-content-center" style="font-size:12px">
+        <a href="?page=pasanaku&action=create" class="btn-pk-outline btn-pk-outline-sidebar w-100 justify-content-center" style="font-size:12px">
           <i class="bi bi-plus-circle"></i> Nuevo pasanaku
         </a>
       </div>
@@ -114,8 +114,8 @@ function formatBs(float $n): string { return 'Bs ' . number_format($n, 0, ',', '
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-title">
-        <?php if ($currentPage === 'pasanaku' && $currentAction === 'detail'): ?>
-          <a href="?page=dashboard" class="btn-icon me-1"><i class="bi bi-arrow-left"></i></a>
+        <?php if (($currentPage === 'pasanaku' && $currentAction === 'detail') || ($currentPage === 'historial' && $currentAction === 'detail')): ?>
+          <a href="?page=<?= $currentPage ?>" class="btn-icon me-1"><i class="bi bi-arrow-left"></i></a>
         <?php endif; ?>
         <?= htmlspecialchars($pageTitle ?? 'Dashboard') ?>
       </div>

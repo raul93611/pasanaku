@@ -65,55 +65,113 @@ document.addEventListener('click', (e) => {
 });
 
 // ── PAY CELL TOGGLE ──────────────────────────────────────────────────────────
+let _pendingPayCell = null;
+
 function initPayCells() {
   document.querySelectorAll('.pay-cell[data-part-id]').forEach(cell => {
-    cell.addEventListener('click', async () => {
-      const partId    = cell.dataset.partId;
-      const ronda     = cell.dataset.ronda;
-      const pasanakuId = cell.dataset.pasanakuId;
+    cell.addEventListener('click', () => {
+      const isPaid = cell.classList.contains('pay-paid');
 
-      try {
-        const res = await fetch('?page=pasanaku&action=togglePago', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ participante_id: partId, ronda, pasanaku_id: pasanakuId })
-        });
-        const data = await res.json();
-        if (!data.ok) return;
-
-        if (data.pagado) {
-          cell.className = 'pay-cell pay-paid';
-          cell.innerHTML = '<i class="bi bi-check-lg"></i>';
-          cell.title = 'Pagó ✓ — clic para marcar pendiente';
-        } else {
-          cell.className = 'pay-cell pay-pending';
-          cell.innerHTML = '<i class="bi bi-clock"></i>';
-          cell.title = 'Pendiente — clic para marcar pagado';
-        }
-
-        // Update counts
-        const countEl = document.getElementById('pagados-count');
-        const totalEl = document.getElementById('total-count');
-        if (countEl && totalEl) {
-          countEl.textContent = data.pagados_count;
-          const total = parseInt(totalEl.textContent);
-          const pct = Math.round((data.pagados_count / total) * 100);
-          document.getElementById('pagados-pct')?.style &&
-            (document.getElementById('pagados-pct').style.width = pct + '%');
-          document.getElementById('pagados-pct-label')?.textContent &&
-            (document.getElementById('pagados-pct-label').textContent = pct + '%');
-          // Recaudado
-          const montoBase = parseInt(document.getElementById('monto-base')?.value || 0);
-          const recaudadoEl = document.getElementById('recaudado-amount');
-          if (recaudadoEl && montoBase) recaudadoEl.textContent = 'Bs ' + (data.pagados_count * montoBase).toLocaleString();
-        }
-
-        showToast(data.pagado ? 'Pago registrado' : 'Pago revertido', data.pagado ? 'success' : 'warning');
-      } catch (err) {
-        showToast('Error al actualizar pago', 'error');
+      if (isPaid) {
+        // Revert immediately — no date needed
+        doTogglePago(cell, null);
+      } else {
+        // Ask for payment date first
+        const nombre = cell.closest('.payment-row')?.querySelector('.payment-row-name')?.textContent?.trim() || '';
+        _pendingPayCell = cell;
+        document.getElementById('pago-nombre-label').textContent = nombre;
+        document.getElementById('pago-fecha-input').value = new Date().toISOString().split('T')[0];
+        document.getElementById('modal-fecha-pago')?.classList.remove('d-none');
       }
     });
   });
+}
+
+function cancelarPago() {
+  _pendingPayCell = null;
+  document.getElementById('modal-fecha-pago')?.classList.add('d-none');
+}
+
+function confirmarPago() {
+  const fecha = document.getElementById('pago-fecha-input')?.value;
+  document.getElementById('modal-fecha-pago')?.classList.add('d-none');
+  if (_pendingPayCell) doTogglePago(_pendingPayCell, fecha);
+  _pendingPayCell = null;
+}
+
+async function doTogglePago(cell, fecha) {
+  const partId     = cell.dataset.partId;
+  const ronda      = cell.dataset.ronda;
+  const pasanakuId = cell.dataset.pasanakuId;
+
+  const params = { participante_id: partId, ronda, pasanaku_id: pasanakuId };
+  if (fecha) params.fecha_pago = fecha;
+
+  try {
+    const res = await fetch('?page=pasanaku&action=togglePago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(params)
+    });
+    const data = await res.json();
+    if (!data.ok) return;
+
+    const isRecipient = cell.dataset.recipient === '1';
+    if (data.pagado) {
+      cell.className = 'pay-cell pay-paid';
+      cell.innerHTML = '<i class="bi bi-check-lg"></i>';
+    } else if (isRecipient) {
+      cell.className = 'pay-cell pay-recipient';
+      cell.innerHTML = '<i class="bi bi-star-fill" style="font-size:12px"></i>';
+    } else {
+      cell.className = 'pay-cell pay-pending';
+      cell.innerHTML = '<i class="bi bi-clock"></i>';
+    }
+
+    // Show/hide payment date below name
+    const fechaEl = document.getElementById('fecha-' + partId);
+    if (fechaEl) {
+      if (data.pagado && data.fecha_pago) {
+        const [y, m, d] = data.fecha_pago.split('-');
+        fechaEl.textContent    = d + '/' + m + '/' + y;
+        fechaEl.style.display  = '';
+      } else {
+        fechaEl.textContent    = '';
+        fechaEl.style.display  = 'none';
+      }
+    }
+
+    // Update center panel counts
+    const countEl = document.getElementById('pagados-count');
+    const totalEl = document.getElementById('total-count');
+    if (countEl && totalEl) {
+      const n     = data.pagados_count;
+      const total = parseInt(totalEl.textContent);
+      countEl.textContent = n;
+      const pct    = Math.round((n / total) * 100);
+      const pctBar = document.getElementById('pagados-pct');
+      if (pctBar) pctBar.style.width = pct + '%';
+      const montoBase    = parseInt(document.getElementById('monto-base')?.value || 0);
+      const recaudadoEl  = document.getElementById('recaudado-amount');
+      if (recaudadoEl && montoBase) recaudadoEl.textContent = 'Bs ' + (n * montoBase).toLocaleString();
+
+      // Update right-panel Entrega section
+      const elPagaron    = document.getElementById('entrega-pagaron-count');
+      const elPendientes = document.getElementById('entrega-pendientes-count');
+      const elHintCount  = document.getElementById('entrega-hint-count');
+      const elHint       = document.getElementById('entrega-hint');
+      const btnEntrega   = document.getElementById('btn-registrar-entrega');
+      if (elPagaron)    elPagaron.textContent    = n;
+      if (elPendientes) elPendientes.textContent  = total - n;
+      if (elHintCount)  elHintCount.textContent   = total - n;
+      if (elHint)       elHint.style.display      = n >= total ? 'none' : '';
+      if (btnEntrega)   btnEntrega.disabled        = n < total;
+    }
+
+    showToast(data.pagado ? 'Pago registrado' : 'Pago revertido', data.pagado ? 'success' : 'warning');
+  } catch (err) {
+    showToast('Error al actualizar pago', 'error');
+  }
 }
 
 // ── SORTABLE (drag & drop) ───────────────────────────────────────────────────
@@ -141,9 +199,8 @@ function initSortable() {
         });
         const data = await res.json();
         if (data.ok) {
-          // Update visual order numbers
-          list.querySelectorAll('.p-num').forEach((el, i) => el.textContent = i + 1);
           showToast('Orden actualizado', 'success');
+          setTimeout(() => location.reload(), 800);
         }
       } catch (err) {
         showToast('Error al guardar orden', 'error');

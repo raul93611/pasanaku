@@ -40,8 +40,12 @@ body {
   transition: transform 0.25s ease;
 }
 .sidebar-brand {
-  padding: 24px 20px 20px;
+  height: 60px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
   border-bottom: 1px solid rgba(255,255,255,0.12);
+  flex-shrink: 0;
 }
 .sidebar-brand .brand-name {
   font-size: 20px; font-weight: 800;
@@ -315,6 +319,16 @@ body {
   margin-bottom: 12px;
   display: flex; align-items: center; gap: 16px;
 }
+.historial-item-link {
+  text-decoration: none; color: inherit;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.12s;
+}
+.historial-item-link:hover {
+  box-shadow: 0 4px 16px rgba(46,125,50,0.1);
+  border-color: var(--pk-green-mid);
+  transform: translateY(-1px);
+  color: inherit;
+}
 .h-icon {
   width: 44px; height: 44px; border-radius: 12px;
   background: var(--pk-green-pale);
@@ -331,17 +345,17 @@ body {
 .badge-green {
   background: var(--pk-green-pale); color: var(--pk-green);
   font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 .badge-amber {
   background: #FEF3C7; color: var(--pk-amber-dark);
   font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 .badge-red {
   background: var(--pk-danger-pale); color: var(--pk-danger);
   font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 
 /* ── BUTTONS ── */
@@ -364,6 +378,15 @@ body {
   font-family: inherit; text-decoration: none;
 }
 .btn-pk-outline:hover { background: var(--pk-green-pale); color: var(--pk-green); }
+.btn-pk-outline-sidebar {
+  color: rgba(255,255,255,0.85);
+  border-color: rgba(255,255,255,0.25);
+}
+.btn-pk-outline-sidebar:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
+}
 .btn-pk-danger {
   background: var(--pk-danger); color: #fff;
   border: none; border-radius: 8px;

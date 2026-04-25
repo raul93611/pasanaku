@@ -69,10 +69,12 @@ class PasanakuController {
         $ronda         = (int)($_GET['ronda'] ?? $rondaActual);
         $totalRondas   = count(array_filter($participantes, fn($p) => $p['activo']));
 
-        // Payment status map: participante_id => bool
+        // Payment status map: participante_id => ['pagado' => bool, 'fecha' => string]
         $pagosRonda = Pago::byPasanakuRonda($id, $ronda);
         $pagadosMap = [];
-        foreach ($pagosRonda as $p) { $pagadosMap[$p['participante_id']] = true; }
+        foreach ($pagosRonda as $p) {
+            $pagadosMap[$p['participante_id']] = ['pagado' => true, 'fecha' => $p['fecha_pago']];
+        }
 
         // Entrega info
         $entregaRonda = Entrega::getRonda($id, $ronda);
@@ -111,12 +113,15 @@ class PasanakuController {
             Pago::eliminar($participanteId, $ronda);
             $pagado = false;
         } else {
-            Pago::registrar($pasanakuId, $participanteId, $ronda, $pasanaku['monto_contribucion']);
+            $fechaPago = $_POST['fecha_pago'] ?? null;
+            if ($fechaPago && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaPago)) $fechaPago = null;
+            Pago::registrar($pasanakuId, $participanteId, $ronda, $pasanaku['monto_contribucion'], $fechaPago);
             $pagado = true;
         }
 
         $pagadosCount = Pago::countPagados($pasanakuId, $ronda);
-        echo json_encode(['ok' => true, 'pagado' => $pagado, 'pagados_count' => $pagadosCount]);
+        $fechaGuardada = $pagado ? ($fechaPago ?: date('Y-m-d')) : null;
+        echo json_encode(['ok' => true, 'pagado' => $pagado, 'pagados_count' => $pagadosCount, 'fecha_pago' => $fechaGuardada]);
         exit;
     }
 
@@ -154,15 +159,25 @@ class PasanakuController {
         exit;
     }
 
-    // ── Add Participante ───────────────────────────────────────────────────────
+    // ── Add Participante(s) ────────────────────────────────────────────────────
     public static function addParticipante(): void {
         $pasanakuId = (int)($_POST['pasanaku_id'] ?? 0);
-        $personaId  = (int)($_POST['persona_id'] ?? 0);
+        $personaIds = $_POST['persona_ids'] ?? [];
 
-        if ($pasanakuId && $personaId && !Participante::isPersonaInPasanaku($pasanakuId, $personaId)) {
-            $orden = Participante::maxOrden($pasanakuId) + 1;
-            Participante::add($pasanakuId, $personaId, $orden);
-            $_SESSION['flash'] = 'Participante agregado.';
+        $added = 0;
+        foreach ($personaIds as $personaId) {
+            $personaId = (int)$personaId;
+            if ($personaId && !Participante::isPersonaInPasanaku($pasanakuId, $personaId)) {
+                $orden = Participante::maxOrden($pasanakuId) + 1;
+                Participante::add($pasanakuId, $personaId, $orden);
+                $added++;
+            }
+        }
+
+        if ($added > 0) {
+            $_SESSION['flash'] = $added === 1
+                ? 'Participante agregado.'
+                : "$added participantes agregados.";
         }
         header("Location: ?page=pasanaku&action=detail&id=$pasanakuId");
         exit;

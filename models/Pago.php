@@ -22,11 +22,12 @@ class Pago {
         return (int)$stmt->fetchColumn() > 0;
     }
 
-    public static function registrar(int $pasanakuId, int $participanteId, int $ronda, float $monto): void {
+    public static function registrar(int $pasanakuId, int $participanteId, int $ronda, float $monto, ?string $fechaPago = null): void {
+        $fecha = $fechaPago ?: date('Y-m-d');
         $stmt = getDB()->prepare(
-            'INSERT INTO pagos (pasanaku_id, participante_id, ronda, monto, fecha_pago) VALUES (?, ?, ?, ?, CURDATE())'
+            'INSERT INTO pagos (pasanaku_id, participante_id, ronda, monto, fecha_pago) VALUES (?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$pasanakuId, $participanteId, $ronda, $monto]);
+        $stmt->execute([$pasanakuId, $participanteId, $ronda, $monto, $fecha]);
     }
 
     public static function eliminar(int $participanteId, int $ronda): void {

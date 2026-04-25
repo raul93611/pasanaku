@@ -23,7 +23,7 @@ require __DIR__ . '/../layout/header.php';
 <?php else: ?>
 
 <?php foreach ($pasanakus as $pk): ?>
-<div class="historial-item">
+<a href="?page=historial&action=detail&id=<?= $pk['id'] ?>" class="historial-item historial-item-link">
   <div class="h-icon"><i class="bi bi-archive"></i></div>
   <div style="flex:1">
     <div class="h-name"><?= htmlspecialchars($pk['nombre']) ?></div>
@@ -33,11 +33,12 @@ require __DIR__ . '/../layout/header.php';
       <?= $pk['fecha_inicio'] ?> — cerrado
     </div>
   </div>
-  <div>
+  <div style="text-align:right">
     <div class="h-amount"><?= formatBs($pk['total_recaudado']) ?></div>
     <div class="h-rounds"><?= formatBs($pk['monto_contribucion']) ?>/persona</div>
   </div>
-</div>
+  <i class="bi bi-chevron-right" style="color:var(--pk-muted);font-size:14px;flex-shrink:0"></i>
+</a>
 <?php endforeach; ?>
 
 <?php endif; ?>

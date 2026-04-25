@@ -107,7 +107,11 @@ switch ($page) {
     // ── HISTORIAL ────────────────────────────────────────────────────────────
     case 'historial':
         require_once __DIR__ . '/controllers/AdminController.php';
-        AdminController::historial();
+        if ($action === 'detail') {
+            AdminController::historialDetail();
+        } else {
+            AdminController::historial();
+        }
         break;
 
     // ── PERFIL ───────────────────────────────────────────────────────────────

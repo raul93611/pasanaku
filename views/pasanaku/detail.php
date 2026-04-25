@@ -98,29 +98,33 @@ require __DIR__ . '/../layout/header.php';
     <div class="payment-grid-wrap">
     <?php foreach ($activeParticipantes as $p):
       $esReceptor = ((int)$p['orden'] === $ronda);
-      $pagado     = isset($pagadosMap[$p['id']]);
+      $pagoInfo   = $pagadosMap[$p['id']] ?? null;
+      $pagado     = !empty($pagoInfo);
+      $fechaPago  = $pagoInfo['fecha'] ?? null;
     ?>
       <div class="payment-row">
-        <div class="payment-row-name" title="<?= htmlspecialchars($p['nombre']) ?>">
-          <?= htmlspecialchars($p['nombre']) ?>
-        </div>
-        <?php if ($esReceptor): ?>
-          <div class="pay-cell pay-recipient" title="Receptor de esta ronda">
-            <i class="bi bi-star-fill" style="font-size:12px"></i>
+        <div style="flex:1;min-width:0">
+          <div class="payment-row-name" title="<?= htmlspecialchars($p['nombre']) ?>">
+            <?= htmlspecialchars($p['nombre']) ?>
           </div>
-        <?php else: ?>
-          <button class="pay-cell <?= $pagado ? 'pay-paid' : 'pay-pending' ?>"
-            data-part-id="<?= $p['id'] ?>"
-            data-ronda="<?= $ronda ?>"
-            data-pasanaku-id="<?= $pasanaku['id'] ?>"
-            title="<?= $pagado ? 'Pagó ✓ — clic para marcar pendiente' : 'Pendiente — clic para marcar pagado' ?>">
-            <?php if ($pagado): ?>
-              <i class="bi bi-check-lg"></i>
-            <?php else: ?>
-              <i class="bi bi-clock"></i>
-            <?php endif; ?>
-          </button>
-        <?php endif; ?>
+          <div class="payment-date" id="fecha-<?= $p['id'] ?>" style="font-size:10px;color:var(--pk-muted);<?= $pagado ? '' : 'display:none' ?>">
+            <?= $fechaPago ? date('d/m/Y', strtotime($fechaPago)) : '' ?>
+          </div>
+        </div>
+        <button class="pay-cell <?= $esReceptor ? ($pagado ? 'pay-paid' : 'pay-recipient') : ($pagado ? 'pay-paid' : 'pay-pending') ?>"
+          data-part-id="<?= $p['id'] ?>"
+          data-ronda="<?= $ronda ?>"
+          data-pasanaku-id="<?= $pasanaku['id'] ?>"
+          data-recipient="<?= $esReceptor ? '1' : '0' ?>"
+          title="<?= $esReceptor ? 'Receptor de esta ronda' : '' ?><?= $pagado ? ' — Pagó ✓ (clic para revertir)' : ' — Pendiente (clic para marcar pagado)' ?>">
+          <?php if ($esReceptor && !$pagado): ?>
+            <i class="bi bi-star-fill" style="font-size:12px"></i>
+          <?php elseif ($pagado): ?>
+            <i class="bi bi-check-lg"></i>
+          <?php else: ?>
+            <i class="bi bi-clock"></i>
+          <?php endif; ?>
+        </button>
       </div>
     <?php endforeach; ?>
 
@@ -173,8 +177,12 @@ require __DIR__ . '/../layout/header.php';
 
       <div class="form-label-sm mb-2">Progreso de pagos</div>
       <div class="d-flex gap-2 mb-3 flex-wrap">
-        <span class="badge-green"><i class="bi bi-check me-1"></i><?= $pagadosCount ?> pagaron</span>
-        <span class="badge-amber"><i class="bi bi-clock me-1"></i><?= $totalActivos - $pagadosCount ?> pendientes</span>
+        <span class="badge-green" id="entrega-badge-pagaron">
+          <i class="bi bi-check"></i><span id="entrega-pagaron-count"><?= $pagadosCount ?></span> pagaron
+        </span>
+        <span class="badge-amber" id="entrega-badge-pendientes">
+          <i class="bi bi-clock"></i><span id="entrega-pendientes-count"><?= $totalActivos - $pagadosCount ?></span> pendientes
+        </span>
       </div>
 
       <?php if ($yaEntregado): ?>
@@ -188,22 +196,42 @@ require __DIR__ . '/../layout/header.php';
         </div>
       </div>
       <?php else: ?>
-      <button class="btn-pk-primary w-100 justify-content-center"
+      <button class="btn-pk-primary w-100 justify-content-center" id="btn-registrar-entrega"
         onclick="confirmarEntrega()"
         <?= $pagadosCount < $totalActivos ? 'disabled' : '' ?>>
         <i class="bi bi-cash-coin"></i>
         Registrar entrega
       </button>
-      <?php if ($pagadosCount < $totalActivos): ?>
-      <div style="font-size:11px;color:var(--pk-muted);margin-top:8px;text-align:center">
-        Faltan <?= $totalActivos - $pagadosCount ?> pagos para habilitar
+      <div id="entrega-hint" style="font-size:11px;color:var(--pk-muted);margin-top:8px;text-align:center;<?= $pagadosCount >= $totalActivos ? 'display:none' : '' ?>">
+        Faltan <span id="entrega-hint-count"><?= $totalActivos - $pagadosCount ?></span> pagos para habilitar
       </div>
-      <?php endif; ?>
       <?php endif; ?>
 
       <hr class="divider">
       <div class="form-label-sm mb-2">Notas de la ronda</div>
       <textarea class="form-control-pk" rows="2" placeholder="Observaciones opcionales…"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar fecha de pago -->
+<div class="modal-overlay d-none" id="modal-fecha-pago">
+  <div class="modal-box" style="max-width:360px">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="modal-title mb-0">Registrar pago</div>
+      <button class="btn-icon" onclick="cancelarPago()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <p style="font-size:13px;color:var(--pk-muted);margin-bottom:16px">
+      Confirma el pago de <strong id="pago-nombre-label" style="color:var(--pk-text)"></strong>
+    </p>
+    <label class="form-label-sm">Fecha de pago</label>
+    <input class="form-control-pk mt-1 mb-4" type="date" id="pago-fecha-input"
+      value="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>">
+    <div class="d-flex gap-2 justify-content-end">
+      <button class="btn-pk-outline" onclick="cancelarPago()">Cancelar</button>
+      <button class="btn-pk-primary" onclick="confirmarPago()">
+        <i class="bi bi-check-lg"></i> Confirmar pago
+      </button>
     </div>
   </div>
 </div>
@@ -234,33 +262,65 @@ require __DIR__ . '/../layout/header.php';
 <div class="modal-overlay d-none" id="modal-add-participante">
   <div class="modal-box">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <div class="modal-title mb-0">Agregar participante</div>
+      <div class="modal-title mb-0">Agregar participantes</div>
       <button class="btn-icon" onclick="closeModal('modal-add-participante')"><i class="bi bi-x-lg"></i></button>
     </div>
+    <?php
+    $partPersonaIds = array_column($participantes, 'persona_id');
+    $disponibles = array_filter($personas, fn($p) => !in_array($p['id'], $partPersonaIds));
+    ?>
+    <?php if (empty($disponibles)): ?>
+      <p style="font-size:13px;color:var(--pk-muted);text-align:center;padding:16px 0">
+        Todas las personas del directorio ya están en este pasanaku.
+      </p>
+      <div class="d-flex justify-content-end">
+        <button type="button" class="btn-pk-outline" onclick="closeModal('modal-add-participante')">Cerrar</button>
+      </div>
+    <?php else: ?>
     <form method="POST" action="?page=pasanaku&action=addParticipante">
       <input type="hidden" name="pasanaku_id" value="<?= $pasanaku['id'] ?>">
-      <div class="mb-3">
-        <label class="form-label-sm">Seleccionar persona</label>
-        <select class="form-control-pk" name="persona_id" required>
-          <option value="">— Selecciona una persona —</option>
-          <?php
-          $partPersonaIds = array_column($participantes, 'persona_id');
-          foreach ($personas as $persona):
-            if (!in_array($persona['id'], $partPersonaIds)):
-          ?>
-          <option value="<?= $persona['id'] ?>"><?= htmlspecialchars($persona['nombre']) ?></option>
-          <?php endif; endforeach; ?>
-        </select>
+      <div class="form-label-sm mb-2">Selecciona una o más personas</div>
+      <div style="max-height:260px;overflow-y:auto;border:1.5px solid var(--pk-border);border-radius:9px;padding:4px">
+        <?php foreach ($disponibles as $persona): ?>
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-radius:7px;font-size:13px;transition:background 0.1s"
+          onmouseover="this.style.background='var(--pk-surface)'" onmouseout="this.style.background=''">
+          <input type="checkbox" name="persona_ids[]" value="<?= $persona['id'] ?>"
+            style="width:16px;height:16px;accent-color:var(--pk-green);flex-shrink:0"
+            onchange="updateAddCount()">
+          <div class="user-avatar" style="width:28px;height:28px;font-size:11px;flex-shrink:0">
+            <?= initials($persona['nombre']) ?>
+          </div>
+          <span style="font-weight:600"><?= htmlspecialchars($persona['nombre']) ?></span>
+          <?php if ($persona['telefono']): ?>
+          <span style="color:var(--pk-muted);font-size:11px;margin-left:auto"><?= htmlspecialchars($persona['telefono']) ?></span>
+          <?php endif; ?>
+        </label>
+        <?php endforeach; ?>
       </div>
-      <div class="d-flex gap-2 justify-content-end">
+      <div style="font-size:12px;color:var(--pk-muted);margin-top:8px" id="add-count-label">
+        Ninguna seleccionada
+      </div>
+      <div class="d-flex gap-2 justify-content-end mt-3">
         <button type="button" class="btn-pk-outline" onclick="closeModal('modal-add-participante')">Cancelar</button>
-        <button type="submit" class="btn-pk-primary">
-          <i class="bi bi-person-plus"></i> Agregar
+        <button type="submit" class="btn-pk-primary" id="btn-add-submit" disabled>
+          <i class="bi bi-person-plus"></i> <span id="btn-add-label">Agregar</span>
         </button>
       </div>
     </form>
+    <?php endif; ?>
   </div>
 </div>
+
+<script>
+function updateAddCount() {
+  const checked = document.querySelectorAll('#modal-add-participante input[type=checkbox]:checked');
+  const n = checked.length;
+  document.getElementById('add-count-label').textContent =
+    n === 0 ? 'Ninguna seleccionada' : n === 1 ? '1 persona seleccionada' : n + ' personas seleccionadas';
+  document.getElementById('btn-add-submit').disabled = n === 0;
+  document.getElementById('btn-add-label').textContent = n > 1 ? 'Agregar ' + n : 'Agregar';
+}
+</script>
 
 <!-- Finalizar pasanaku -->
 <?php
