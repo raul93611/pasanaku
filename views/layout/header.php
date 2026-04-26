@@ -34,10 +34,21 @@ function formatBs(float $n): string { return 'Bs ' . number_format($n, 0, ',', '
     </div>
     Pasanaku
   </div>
-  <button class="btn-icon" id="sidebar-toggle"
-    style="background:transparent;border:none;color:#fff;font-size:20px">
-    <i class="bi bi-list"></i>
-  </button>
+  <div class="d-flex align-items-center gap-2">
+    <?php if ($currentPage === 'dashboard' || ($currentPage === 'pasanaku' && $currentAction === '')): ?>
+      <a href="?page=pasanaku&action=create" class="btn-pk-primary" style="font-size:12px;padding:6px 10px">
+        <i class="bi bi-plus-lg"></i> Nuevo
+      </a>
+    <?php elseif ($currentPage === 'personas'): ?>
+      <button class="btn-pk-primary" style="font-size:12px;padding:6px 10px" onclick="openModal('modal-nueva-persona')">
+        <i class="bi bi-person-plus"></i>
+      </button>
+    <?php endif; ?>
+    <button class="btn-icon" id="sidebar-toggle"
+      style="background:transparent;border:none;color:#fff;font-size:20px">
+      <i class="bi bi-list"></i>
+    </button>
+  </div>
 </div>
 
 <div class="sidebar-overlay"></div>
