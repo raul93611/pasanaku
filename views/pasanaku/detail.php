@@ -145,6 +145,15 @@ require __DIR__ . '/../layout/header.php';
       </div>
     </div>
 
+    <?php if ($yaEntregado && !empty($entregaRonda['notas'])): ?>
+    <div class="mt-3" style="background:var(--pk-green-pale);border-left:3px solid var(--pk-green);border-radius:9px;padding:10px 12px">
+      <div style="font-size:11px;font-weight:700;color:var(--pk-green);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">
+        <i class="bi bi-sticky"></i> Notas de la ronda
+      </div>
+      <div style="font-size:13px;color:var(--pk-text);white-space:pre-wrap"><?= htmlspecialchars($entregaRonda['notas']) ?></div>
+    </div>
+    <?php endif; ?>
+
     <input type="hidden" id="monto-base" value="<?= $pasanaku['monto_contribucion'] ?>">
     </div>
   </div>
@@ -193,11 +202,6 @@ require __DIR__ . '/../layout/header.php';
           <div style="font-size:11px;color:var(--pk-muted)">
             <?= $entregaRonda['fecha_entrega'] ?? '' ?>
           </div>
-          <?php if (!empty($entregaRonda['notas'])): ?>
-          <div style="font-size:12px;color:var(--pk-text);margin-top:6px;white-space:pre-wrap">
-            <?= htmlspecialchars($entregaRonda['notas']) ?>
-          </div>
-          <?php endif; ?>
         </div>
       </div>
       <?php else: ?>
