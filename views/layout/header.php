@@ -6,7 +6,7 @@
   <title><?= htmlspecialchars($pageTitle ?? 'Pasanaku') ?> — Gestor de Ahorros</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="<?= BASE_URL ?>assets/css/app.css" rel="stylesheet">
+  <link href="<?= BASE_URL ?>assets/css/app.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/app.css') ?>" rel="stylesheet">
 </head>
 <body>
 

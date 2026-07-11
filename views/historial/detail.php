@@ -116,6 +116,12 @@ require __DIR__ . '/../layout/header.php';
         <span style="font-size:13px;color:var(--pk-muted)">Entregado el <?= $entrega['fecha_entrega'] ?></span>
         <strong style="color:var(--pk-green);margin-left:auto"><?= formatBs($pasanaku['monto_contribucion'] * $totalParts) ?></strong>
       </div>
+      <?php if (!empty($entrega['notas'])): ?>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:flex-start">
+        <i class="bi bi-sticky" style="color:var(--pk-muted);font-size:13px;margin-top:2px"></i>
+        <span style="font-size:12px;color:var(--pk-text);white-space:pre-wrap"><?= htmlspecialchars($entrega['notas']) ?></span>
+      </div>
+      <?php endif; ?>
       <?php endif; ?>
     </div>
   </div>

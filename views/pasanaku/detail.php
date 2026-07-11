@@ -145,6 +145,15 @@ require __DIR__ . '/../layout/header.php';
       </div>
     </div>
 
+    <?php if ($yaEntregado && !empty($entregaRonda['notas'])): ?>
+    <div class="mt-3" style="background:var(--pk-green-pale);border-left:3px solid var(--pk-green);border-radius:9px;padding:10px 12px">
+      <div style="font-size:11px;font-weight:700;color:var(--pk-green);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px">
+        <i class="bi bi-sticky"></i> Notas de la ronda
+      </div>
+      <div style="font-size:13px;color:var(--pk-text);white-space:pre-wrap"><?= htmlspecialchars($entregaRonda['notas']) ?></div>
+    </div>
+    <?php endif; ?>
+
     <input type="hidden" id="monto-base" value="<?= $pasanaku['monto_contribucion'] ?>">
     </div>
   </div>
@@ -209,7 +218,13 @@ require __DIR__ . '/../layout/header.php';
 
       <hr class="divider">
       <div class="form-label-sm mb-2">Notas de la ronda</div>
-      <textarea class="form-control-pk" rows="2" placeholder="Observaciones opcionales…"></textarea>
+      <?php if ($yaEntregado): ?>
+      <textarea class="form-control-pk" id="entrega-notas" rows="2" readonly
+        placeholder="Sin notas para esta ronda"><?= htmlspecialchars($entregaRonda['notas'] ?? '') ?></textarea>
+      <?php else: ?>
+      <textarea class="form-control-pk" id="entrega-notas" rows="2"
+        placeholder="Observaciones opcionales… (se guardan al registrar la entrega)"></textarea>
+      <?php endif; ?>
     </div>
   </div>
 </div>

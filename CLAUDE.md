@@ -140,4 +140,5 @@ mysql -u user -p pasanaku < sql/seed.sql
 | Eliminar participante (turno saltado) | ✅ built |
 | Cierre manual del pasanaku | ✅ built |
 | Historial de pasanakus finalizados | ✅ built |
+| Notas por ronda (capturadas al registrar entrega) | ✅ built |
 | Seed de datos de prueba | ✅ built |

@@ -144,6 +144,8 @@ class PasanakuController {
         $pasanakuId     = (int)($_POST['pasanaku_id'] ?? 0);
         $participanteId = (int)($_POST['participante_id'] ?? 0);
         $ronda          = (int)($_POST['ronda'] ?? 0);
+        $notas          = trim($_POST['notas'] ?? '');
+        $notas          = $notas === '' ? null : $notas;
 
         if (!$pasanakuId || !$participanteId || !$ronda) {
             echo json_encode(['ok' => false, 'msg' => 'Datos incompletos']); exit;
@@ -154,7 +156,7 @@ class PasanakuController {
             echo json_encode(['ok' => false, 'msg' => 'Ya registrada']); exit;
         }
 
-        Entrega::registrar($pasanakuId, $participanteId, $ronda);
+        Entrega::registrar($pasanakuId, $participanteId, $ronda, $notas);
         echo json_encode(['ok' => true]);
         exit;
     }

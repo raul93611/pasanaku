@@ -20,11 +20,11 @@ class Entrega {
         return $stmt->fetch();
     }
 
-    public static function registrar(int $pasanakuId, int $participanteId, int $ronda): void {
+    public static function registrar(int $pasanakuId, int $participanteId, int $ronda, ?string $notas = null): void {
         $stmt = getDB()->prepare(
-            'INSERT INTO entregas (pasanaku_id, participante_id, ronda, fecha_entrega) VALUES (?, ?, ?, CURDATE())'
+            'INSERT INTO entregas (pasanaku_id, participante_id, ronda, fecha_entrega, notas) VALUES (?, ?, ?, CURDATE(), ?)'
         );
-        $stmt->execute([$pasanakuId, $participanteId, $ronda]);
+        $stmt->execute([$pasanakuId, $participanteId, $ronda, $notas]);
     }
 
     public static function countByPasanaku(int $pasanakuId): int {
