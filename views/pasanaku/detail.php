@@ -193,6 +193,11 @@ require __DIR__ . '/../layout/header.php';
           <div style="font-size:11px;color:var(--pk-muted)">
             <?= $entregaRonda['fecha_entrega'] ?? '' ?>
           </div>
+          <?php if (!empty($entregaRonda['notas'])): ?>
+          <div style="font-size:12px;color:var(--pk-text);margin-top:6px;white-space:pre-wrap">
+            <?= htmlspecialchars($entregaRonda['notas']) ?>
+          </div>
+          <?php endif; ?>
         </div>
       </div>
       <?php else: ?>
@@ -209,7 +214,13 @@ require __DIR__ . '/../layout/header.php';
 
       <hr class="divider">
       <div class="form-label-sm mb-2">Notas de la ronda</div>
-      <textarea class="form-control-pk" rows="2" placeholder="Observaciones opcionales…"></textarea>
+      <?php if ($yaEntregado): ?>
+      <textarea class="form-control-pk" id="entrega-notas" rows="2" readonly
+        placeholder="Sin notas para esta ronda"><?= htmlspecialchars($entregaRonda['notas'] ?? '') ?></textarea>
+      <?php else: ?>
+      <textarea class="form-control-pk" id="entrega-notas" rows="2"
+        placeholder="Observaciones opcionales… (se guardan al registrar la entrega)"></textarea>
+      <?php endif; ?>
     </div>
   </div>
 </div>

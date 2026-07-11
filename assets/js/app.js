@@ -218,10 +218,11 @@ function cancelarEntrega() {
 }
 async function submitEntrega(pasanakuId, participanteId, ronda) {
   try {
+    const notas = document.getElementById('entrega-notas')?.value ?? '';
     const res = await fetch('?page=pasanaku&action=registrarEntrega', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ pasanaku_id: pasanakuId, participante_id: participanteId, ronda })
+      body: new URLSearchParams({ pasanaku_id: pasanakuId, participante_id: participanteId, ronda, notas })
     });
     const data = await res.json();
     if (data.ok) {

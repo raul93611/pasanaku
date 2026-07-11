@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS `entregas` (
   `participante_id` INT NOT NULL,
   `ronda`           INT NOT NULL,
   `fecha_entrega`   DATE NOT NULL,
+  `notas`           TEXT NULL,
   `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`pasanaku_id`)     REFERENCES `pasanakus`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`participante_id`) REFERENCES `pasanaku_participantes`(`id`) ON DELETE CASCADE
